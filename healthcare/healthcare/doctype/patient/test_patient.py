@@ -7,6 +7,7 @@ import os
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from frappe.utils import add_days, getdate, nowdate
 
 from healthcare.healthcare.doctype.patient_appointment.test_patient_appointment import (
 	create_patient,
@@ -138,6 +139,18 @@ class TestPatient(FrappeTestCase):
 
 		self.assertEqual(p1_customer_name, p2_customer_name)
 		self.assertEqual(p2_customer.customer_name, "John Doe")
+
+	def test_future_dob_not_allowed(self):
+		patient = frappe.new_doc("Patient")
+		patient.first_name = "Future Born"
+		patient.sex = "Female"
+		patient.dob = add_days(nowdate(), 1)
+
+		self.assertRaises(frappe.ValidationError, patient.insert)
+
+		patient.dob = nowdate()
+		patient.insert()
+		self.assertEqual(getdate(patient.dob), getdate())
 
 
 def create_registration_item():
